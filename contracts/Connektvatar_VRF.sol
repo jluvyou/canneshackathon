@@ -53,27 +53,28 @@ contract ConnectERC20 is ERC20, ERC20Burnable, ERC20Permit, VRFConsumerBaseV2Plu
         return rand5 * rand7 * rand29;
     }
 
-    function mint(address to) public onlyOwner {
-        // chainlink is stalled on sepolia
+    function mint(address to) public {
+        // chainlink was stalled on sepolia
         // See Txns on https://sepolia.etherscan.io/address/0x79f2743c4526a267a0e285d436ff3f787f784337
-        // uint256 requestId = COORDINATOR.requestRandomWords(
-        //     VRFV2PlusClient.RandomWordsRequest({
-        //         keyHash: keyHash,
-        //         subId: subscriptionId,
-        //         requestConfirmations: requestConfirmations,
-        //         callbackGasLimit: callbackGasLimit,
-        //         numWords: numWords,
-        //         extraArgs: VRFV2PlusClient._argsToBytes(
-        //             VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
-        //         )
-        //     })
-        // );
-        // requests[requestId] = to;
-        // emit RequestSent(requestId, numWords);
+        uint256 requestId = COORDINATOR.requestRandomWords(
+            VRFV2PlusClient.RandomWordsRequest({
+                keyHash: keyHash,
+                subId: subscriptionId,
+                requestConfirmations: requestConfirmations,
+                callbackGasLimit: callbackGasLimit,
+                numWords: numWords,
+                extraArgs: VRFV2PlusClient._argsToBytes(
+                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
+                )
+            })
+        );
+        requests[requestId] = to;
+        emit RequestSent(requestId, numWords);
 
-        uint256 amount = _randomNumberToAmount(randomNumber());
-        emit RequestFulfilled(0, 0, amount);
-        _internal_mint(to, amount);
+        // alternative not-perfect 
+        // uint256 amount = _randomNumberToAmount(randomNumber());
+        // emit RequestFulfilled(0, 0, amount);
+        // _internal_mint(to, amount);
     }
 
     function _internal_mint(address to, uint256 amount) internal {
@@ -89,7 +90,7 @@ contract ConnectERC20 is ERC20, ERC20Burnable, ERC20Permit, VRFConsumerBaseV2Plu
         return highestHolder;
     }
 
-    function resetBalance(address holder) external onlyOwner{
+    function resetBalance(address holder) external {
         _burn(holder, balanceOf(holder));
     }
 
